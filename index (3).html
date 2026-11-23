@@ -1,0 +1,1679 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#9c4dcc" id="metaThemeColor" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Máy tính" />
+  <title>Máy tính - Tùy chỉnh & Offline</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --header-bg: #9c4dcc;
+      --header-text: #ffffff;
+      --display-bg: #ffffff;
+      --display-text: #111827;
+      --display-subtext: #6b7280;
+      --accent-color: #8e24aa;
+      --keypad-bg: #f3f4f6;
+      --num-btn-bg: #ffffff;
+      --num-btn-text: #111827;
+      --op-btn-bg: #ffffff;
+      --op-btn-text: #8e24aa;
+      --eq-btn-bg: #7b1fa2;
+      --eq-btn-text: #ffffff;
+
+      --btn-scale-h: 58px;
+      --btn-gap: 8px;
+      --btn-radius: 10px;
+      --btn-font-size: 24px;
+      --display-font-size: 46px;
+      --sci-font-size: 15px;
+
+      --bg-opacity: 1;
+      --bg-overlay-alpha: 0;
+      --bg-scale: 100%;
+      --bg-pos-x: 50%;
+      --bg-pos-y: 50%;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #e5e7eb;
+      height: 100dvh;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* App Container */
+    #appShell {
+      width: 100%;
+      max-width: 460px;
+      height: 100dvh;
+      max-height: 920px;
+      background-color: var(--keypad-bg);
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.18);
+      position: relative;
+      overflow: hidden;
+    }
+
+    @media (min-width: 500px) {
+      #appShell {
+        height: 94dvh;
+        border-radius: 24px;
+        border: 1px solid rgba(0,0,0,0.08);
+      }
+    }
+
+    /* Header Bar */
+    #topHeader {
+      background-color: var(--header-bg);
+      color: var(--header-text);
+      transition: background-color 0.2s, color 0.2s;
+      flex-shrink: 0;
+      z-index: 20;
+    }
+
+    /* Display Frame */
+    #displayWrapper {
+      background-color: var(--display-bg);
+      position: relative;
+      flex: 1;
+      min-height: 165px;
+      margin: 8px 8px 4px 8px;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+      transition: background-color 0.2s;
+    }
+
+    /* Wallpaper Layer inside Display Frame */
+    #displayBgImage {
+      position: absolute;
+      inset: 0;
+      background-repeat: no-repeat;
+      background-position: var(--bg-pos-x) var(--bg-pos-y);
+      background-size: var(--bg-scale);
+      opacity: var(--bg-opacity);
+      pointer-events: none;
+      z-index: 0;
+      transition: opacity 0.15s;
+    }
+
+    /* Contrast Overlay on Wallpaper */
+    #displayBgOverlay {
+      position: absolute;
+      inset: 0;
+      background-color: rgba(0, 0, 0, var(--bg-overlay-alpha));
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* Display Text Content */
+    #displayContent {
+      position: relative;
+      z-index: 2;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: flex-end;
+      padding: 12px 16px 4px 16px;
+      overflow: hidden;
+    }
+
+    #expressionText {
+      color: var(--display-subtext);
+      font-size: calc(var(--display-font-size) * 0.44);
+      min-height: 1.4em;
+      width: 100%;
+      text-align: right;
+      overflow-x: auto;
+      white-space: nowrap;
+      scrollbar-width: none;
+      user-select: text;
+    }
+    #expressionText::-webkit-scrollbar { display: none; }
+
+    #resultText {
+      color: var(--display-text);
+      font-size: var(--display-font-size);
+      font-weight: 300;
+      line-height: 1.15;
+      width: 100%;
+      text-align: right;
+      overflow-x: auto;
+      white-space: nowrap;
+      scrollbar-width: none;
+      user-select: text;
+      transition: font-size 0.1s;
+    }
+    #resultText::-webkit-scrollbar { display: none; }
+
+    /* Display Bottom Toolbar (..., ^, Backspace) */
+    #displayToolbar {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 14px 10px 14px;
+      color: var(--accent-color);
+    }
+
+    .toolbar-btn {
+      padding: 6px 10px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.1s, background-color 0.15s;
+    }
+    .toolbar-btn:active {
+      transform: scale(0.9);
+      background-color: rgba(142, 36, 170, 0.12);
+    }
+
+    /* Expandable Scientific Drawer */
+    #scientificPanel {
+      background-color: var(--keypad-bg);
+      padding: 0 8px;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.28s cubic-bezier(0.4, 0, 0.2, 1), padding 0.28s ease;
+      flex-shrink: 0;
+    }
+    #scientificPanel.open {
+      max-height: 220px;
+      padding: 4px 8px 4px 8px;
+    }
+
+    .sci-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+    }
+
+    .sci-btn {
+      background-color: var(--op-btn-bg);
+      color: var(--op-btn-text);
+      font-size: var(--sci-font-size);
+      font-weight: 500;
+      height: 36px;
+      border-radius: calc(var(--btn-radius) * 0.8);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.08s, filter 0.12s;
+    }
+    .sci-btn:active {
+      transform: scale(0.93);
+      filter: brightness(0.92);
+    }
+
+    /* Main Keypad Area */
+    #keypadArea {
+      background-color: var(--keypad-bg);
+      padding: 4px 8px 10px 8px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--btn-gap);
+      flex-shrink: 0;
+      transition: background-color 0.2s;
+    }
+
+    .calc-btn {
+      height: var(--btn-scale-h);
+      border-radius: var(--btn-radius);
+      font-size: var(--btn-font-size);
+      font-weight: 400;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+      transition: transform 0.08s ease, filter 0.12s ease, background-color 0.2s, color 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .calc-btn:active {
+      transform: scale(0.94);
+      filter: brightness(0.92);
+    }
+
+    .btn-num {
+      background-color: var(--num-btn-bg);
+      color: var(--num-btn-text);
+    }
+
+    .btn-op {
+      background-color: var(--op-btn-bg);
+      color: var(--op-btn-text);
+      font-weight: 500;
+    }
+
+    .btn-eq {
+      background-color: var(--eq-btn-bg);
+      color: var(--eq-btn-text);
+      font-weight: 500;
+      box-shadow: 0 2px 6px rgba(123, 31, 162, 0.35);
+    }
+
+    /* Custom Scrollbar for Modals */
+    .custom-scroll::-webkit-scrollbar {
+      width: 5px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: rgba(156, 163, 175, 0.5);
+      border-radius: 99px;
+    }
+
+    /* Range Slider Styling */
+    input[type="range"] {
+      accent-color: var(--accent-color);
+      cursor: pointer;
+    }
+    input[type="color"] {
+      -webkit-appearance: none;
+      border: none;
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      cursor: pointer;
+      background: transparent;
+      padding: 0;
+    }
+    input[type="color"]::-webkit-color-swatch-wrapper {
+      padding: 0;
+    }
+    input[type="color"]::-webkit-color-swatch {
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Main Calculator Shell -->
+  <div id="appShell">
+    
+    <!-- Top Header Bar -->
+    <header id="topHeader" class="flex items-center justify-between px-4 py-3 shadow-sm">
+      <div class="flex items-center gap-4">
+        <button id="openSettingsMenuBtn" title="Tùy chỉnh giao diện & cài đặt" class="p-1.5 rounded-lg hover:bg-white/15 active:scale-95 transition">
+          <!-- Hamburger Icon -->
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+        <h1 class="text-lg font-medium tracking-wide">Máy tính</h1>
+        <span id="offlineBadge" class="hidden text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/20">Offline</span>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <!-- History Button -->
+        <button id="openHistoryBtn" title="Lịch sử tính toán" class="p-2 rounded-full hover:bg-white/15 active:scale-95 transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </button>
+        <!-- Quick Menu / 3 Dots -->
+        <button id="openQuickMoreBtn" title="Tùy chọn nhanh" class="p-2 rounded-full hover:bg-white/15 active:scale-95 transition">
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <circle cx="12" cy="5" r="2" />
+            <circle cx="12" cy="12" r="2" />
+            <circle cx="12" cy="19" r="2" />
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Display Frame (Supports Custom Gallery Image) -->
+    <section id="displayWrapper">
+      <div id="displayBgImage"></div>
+      <div id="displayBgOverlay"></div>
+
+      <!-- Expression & Main Result -->
+      <div id="displayContent">
+        <div id="degRadIndicator" class="hidden self-start mb-auto text-xs font-semibold px-2 py-0.5 rounded bg-black/10 backdrop-blur-sm" style="color: var(--display-subtext);">DEG</div>
+        <div id="expressionText"></div>
+        <div id="resultText">0</div>
+      </div>
+
+      <!-- Display Floating Bottom Action Bar -->
+      <div id="displayToolbar">
+        <!-- Left '...' Quick Theme/Wallpaper Shortcut -->
+        <button id="displayDotsBtn" class="toolbar-btn" title="Tùy chỉnh khung & màu sắc">
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <circle cx="5" cy="12" r="2" />
+            <circle cx="12" cy="12" r="2" />
+            <circle cx="19" cy="12" r="2" />
+          </svg>
+        </button>
+
+        <!-- Center '^' Scientific Panel Toggle -->
+        <button id="toggleSciBtn" class="toolbar-btn" title="Mở rộng phép tính phức tạp">
+          <svg id="sciChevronIcon" class="w-5 h-5 transition-transform duration-300" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7" />
+          </svg>
+        </button>
+
+        <!-- Right Backspace Icon -->
+        <button id="backspaceBtn" class="toolbar-btn" title="Xóa lùi">
+          <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M22 3H7c-.69 0-1.23.35-1.59.88L0 12l5.41 8.11c.36.53.9.89 1.59.89h15c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-3 12.59L17.59 17 14 13.41 10.41 17 9 15.59 12.59 12 9 8.41 10.41 7 14 10.59 17.59 7 19 8.41 15.41 12 19 15.59z"/>
+          </svg>
+        </button>
+      </div>
+    </section>
+
+    <!-- Expandable Scientific Panel -->
+    <section id="scientificPanel">
+      <div class="sci-grid">
+        <button class="sci-btn" id="degRadBtn" data-action="degRad">DEG</button>
+        <button class="sci-btn" data-sci="sin(">sin</button>
+        <button class="sci-btn" data-sci="cos(">cos</button>
+        <button class="sci-btn" data-sci="tan(">tan</button>
+        <button class="sci-btn" data-sci="^">xʸ</button>
+
+        <button class="sci-btn" data-sci="ln(">ln</button>
+        <button class="sci-btn" data-sci="log(">log</button>
+        <button class="sci-btn" data-sci="√(">√</button>
+        <button class="sci-btn" data-sci="π">π</button>
+        <button class="sci-btn" data-sci="e">e</button>
+
+        <button class="sci-btn" data-sci="!">x!</button>
+        <button class="sci-btn" data-sci="1/(">1/x</button>
+        <button class="sci-btn" data-sci="abs(">|x|</button>
+        <button class="sci-btn" data-sci="asin(">sin⁻¹</button>
+        <button class="sci-btn" data-sci="acos(">cos⁻¹</button>
+      </div>
+    </section>
+
+    <!-- Main 4x5 Calculator Keypad -->
+    <main id="keypadArea">
+      <!-- Row 1 -->
+      <button class="calc-btn btn-op" data-key="C">C</button>
+      <button class="calc-btn btn-op" data-key="()">()</button>
+      <button class="calc-btn btn-op" data-key="%">%</button>
+      <button class="calc-btn btn-op" data-key="÷">÷</button>
+
+      <!-- Row 2 -->
+      <button class="calc-btn btn-num" data-key="7">7</button>
+      <button class="calc-btn btn-num" data-key="8">8</button>
+      <button class="calc-btn btn-num" data-key="9">9</button>
+      <button class="calc-btn btn-op" data-key="×">×</button>
+
+      <!-- Row 3 -->
+      <button class="calc-btn btn-num" data-key="4">4</button>
+      <button class="calc-btn btn-num" data-key="5">5</button>
+      <button class="calc-btn btn-num" data-key="6">6</button>
+      <button class="calc-btn btn-op" data-key="−">−</button>
+
+      <!-- Row 4 -->
+      <button class="calc-btn btn-num" data-key="1">1</button>
+      <button class="calc-btn btn-num" data-key="2">2</button>
+      <button class="calc-btn btn-num" data-key="3">3</button>
+      <button class="calc-btn btn-op" data-key="+">+</button>
+
+      <!-- Row 5 -->
+      <button class="calc-btn btn-num" data-key="0">0</button>
+      <button class="calc-btn btn-num" data-key="00">00</button>
+      <button class="calc-btn btn-num" data-key=",">,</button>
+      <button class="calc-btn btn-eq" data-key="=">=</button>
+    </main>
+
+    <!-- Toast Notification -->
+    <div id="toastMsg" class="pointer-events-none fixed bottom-24 left-1/2 -translate-x-1/2 bg-gray-900/90 text-white text-xs font-medium px-4 py-2 rounded-full shadow-lg opacity-0 transition-opacity duration-200 z-50">
+      Đã lưu cài đặt
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- HISTORY MODAL / DRAWER                                    -->
+    <!-- ========================================================= -->
+    <div id="historyModal" class="hidden absolute inset-0 bg-black/40 z-40 flex flex-col justify-end transition-opacity">
+      <div class="bg-white w-full h-[78%] rounded-t-2xl shadow-2xl flex flex-col overflow-hidden">
+        <div class="flex items-center justify-between px-4 py-3.5 border-b border-gray-100">
+          <div class="flex items-center gap-2">
+            <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <h2 class="font-semibold text-gray-800">Lịch sử tính toán</h2>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="clearHistoryBtn" class="text-xs font-medium text-red-600 hover:bg-red-50 px-2.5 py-1.5 rounded-lg transition">
+              Xóa tất cả
+            </button>
+            <button id="closeHistoryBtn" class="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div id="historyList" class="flex-1 overflow-y-auto p-4 space-y-3 custom-scroll">
+          <!-- History items rendered dynamically -->
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- CUSTOMIZATION & SETTINGS MODAL                            -->
+    <!-- ========================================================= -->
+    <div id="settingsModal" class="hidden absolute inset-0 bg-black/45 z-40 flex flex-col justify-end">
+      <div class="bg-white w-full h-[88%] rounded-t-2xl shadow-2xl flex flex-col overflow-hidden">
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-gray-50">
+          <h2 class="font-semibold text-gray-800 text-base">Tùy chỉnh Máy tính</h2>
+          <div class="flex items-center gap-2">
+            <button id="resetAllBtn" class="text-xs font-medium text-gray-600 bg-gray-200/80 hover:bg-gray-300 px-2.5 py-1.5 rounded-lg transition">
+              Mặc định
+            </button>
+            <button id="closeSettingsBtn" class="p-1.5 rounded-lg text-gray-600 hover:bg-gray-200">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Tabs Navigation -->
+        <div class="grid grid-cols-4 border-b border-gray-200 bg-white text-xs font-medium">
+          <button class="settings-tab py-2.5 text-purple-700 border-b-2 border-purple-700" data-tab="tabColors">Màu sắc</button>
+          <button class="settings-tab py-2.5 text-gray-500" data-tab="tabWallpaper">Hình nền</button>
+          <button class="settings-tab py-2.5 text-gray-500" data-tab="tabSizes">Kích thước</button>
+          <button class="settings-tab py-2.5 text-gray-500" data-tab="tabSoundOffline">Âm & Offline</button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="flex-1 overflow-y-auto p-4 custom-scroll space-y-5 text-sm text-gray-700">
+          
+          <!-- TAB 1: MÀU SẮC TỪNG PHẦN -->
+          <div id="tabColors" class="tab-content space-y-4">
+            <!-- Quick Presets -->
+            <div>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Bộ màu có sẵn</label>
+              <div class="grid grid-cols-4 gap-2">
+                <button class="preset-btn flex flex-col items-center gap-1 p-2 rounded-xl border border-gray-200 hover:border-purple-500" data-preset="purple">
+                  <span class="w-7 h-7 rounded-full shadow-inner" style="background: linear-gradient(135deg, #9c4dcc 50%, #f3f4f6 50%);"></span>
+                  <span class="text-[11px]">Tím gốc</span>
+                </button>
+                <button class="preset-btn flex flex-col items-center gap-1 p-2 rounded-xl border border-gray-200 hover:border-blue-500" data-preset="ocean">
+                  <span class="w-7 h-7 rounded-full shadow-inner" style="background: linear-gradient(135deg, #0284c7 50%, #e0f2fe 50%);"></span>
+                  <span class="text-[11px]">Xanh biển</span>
+                </button>
+                <button class="preset-btn flex flex-col items-center gap-1 p-2 rounded-xl border border-gray-200 hover:border-pink-500" data-preset="sakura">
+                  <span class="w-7 h-7 rounded-full shadow-inner" style="background: linear-gradient(135deg, #ec4899 50%, #fce7f3 50%);"></span>
+                  <span class="text-[11px]">Hồng phấn</span>
+                </button>
+                <button class="preset-btn flex flex-col items-center gap-1 p-2 rounded-xl border border-gray-200 hover:border-gray-800" data-preset="dark">
+                  <span class="w-7 h-7 rounded-full shadow-inner" style="background: linear-gradient(135deg, #1f2937 50%, #111827 50%);"></span>
+                  <span class="text-[11px]">Tối AMOLED</span>
+                </button>
+              </div>
+            </div>
+
+            <hr class="border-gray-100" />
+
+            <!-- Individual Section Color Pickers -->
+            <div class="space-y-3">
+              <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500">Tùy chỉnh màu từng phần</label>
+
+              <div class="flex items-center justify-between bg-gray-50 p-2.5 rounded-xl">
+                <span>Thanh tiêu đề trên (Nền / Chữ)</span>
+                <div class="flex items-center gap-2">
+                  <input type="color" data-var="--header-bg" value="#9c4dcc" title="Màu nền thanh trên" />
+                  <input type="color" data-var="--header-text" value="#ffffff" title="Màu chữ thanh trên" />
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between bg-gray-50 p-2.5 rounded-xl">
+                <span>Khung hiển thị số (Nền / Số)</span>
+                <div class="flex items-center gap-2">
+                  <input type="color" data-var="--display-bg" value="#ffffff" title="Màu nền khung tính" />
+                  <input type="color" data-var="--display-text" value="#111827" title="Màu chữ kết quả" />
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between bg-gray-50 p-2.5 rounded-xl">
+                <span>Nền khu vực bàn phím</span>
+                <div class="flex items-center gap-2">
+                  <input type="color" data-var="--keypad-bg" value="#f3f4f6" title="Màu nền bàn phím" />
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between bg-gray-50 p-2.5 rounded-xl">
+                <span>Phím số 0–9, 00, dấu phẩy (Nền / Chữ)</span>
+                <div class="flex items-center gap-2">
+                  <input type="color" data-var="--num-btn-bg" value="#ffffff" title="Màu nền phím số" />
+                  <input type="color" data-var="--num-btn-text" value="#111827" title="Màu chữ phím số" />
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between bg-gray-50 p-2.5 rounded-xl">
+                <span>Phím phép tính C, (), %, ÷, ×, −, +</span>
+                <div class="flex items-center gap-2">
+                  <input type="color" data-var="--op-btn-bg" value="#ffffff" title="Màu nền phím phép tính" />
+                  <input type="color" data-var="--op-btn-text" value="#8e24aa" title="Màu chữ phím phép tính" />
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between bg-gray-50 p-2.5 rounded-xl">
+                <span>Nút dấu bằng "=" (Nền / Chữ)</span>
+                <div class="flex items-center gap-2">
+                  <input type="color" data-var="--eq-btn-bg" value="#7b1fa2" title="Màu nền nút =" />
+                  <input type="color" data-var="--eq-btn-text" value="#ffffff" title="Màu chữ nút =" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 2: HÌNH NỀN KHUNG TÍNH TOÁN -->
+          <div id="tabWallpaper" class="tab-content hidden space-y-4">
+            <div class="bg-purple-50/70 border border-purple-100 rounded-xl p-3.5 text-center space-y-2.5">
+              <p class="text-xs text-gray-600">Chọn ảnh từ bộ sưu tập điện thoại / máy tính để làm hình nền cho khung tính toán (tự động lưu offline).</p>
+              <div class="flex items-center justify-center gap-2">
+                <label class="cursor-pointer inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-medium px-4 py-2.5 rounded-xl shadow transition">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <span>Chọn ảnh từ bộ sưu tập</span>
+                  <input type="file" id="bgImageInput" accept="image/*" class="hidden" />
+                </label>
+                <button id="removeBgImageBtn" class="text-xs font-medium text-red-600 bg-white border border-red-200 hover:bg-red-50 px-3 py-2.5 rounded-xl transition">
+                  Xóa ảnh
+                </button>
+              </div>
+            </div>
+
+            <!-- Wallpaper Sliders -->
+            <div class="space-y-3.5 bg-gray-50 p-3.5 rounded-xl">
+              <div>
+                <div class="flex justify-between text-xs font-medium mb-1">
+                  <span>Độ đậm nhạt ảnh (Độ rõ ảnh)</span>
+                  <span id="valBgOpacity">100%</span>
+                </div>
+                <input type="range" id="rangeBgOpacity" min="10" max="100" value="100" class="w-full" />
+              </div>
+
+              <div>
+                <div class="flex justify-between text-xs font-medium mb-1">
+                  <span>Lớp phủ tối (Giúp dễ nhìn số trắng)</span>
+                  <span id="valBgOverlay">0%</span>
+                </div>
+                <input type="range" id="rangeBgOverlay" min="0" max="80" value="0" class="w-full" />
+              </div>
+
+              <div>
+                <div class="flex justify-between text-xs font-medium mb-1">
+                  <span>Phóng to / Thu nhỏ ảnh</span>
+                  <span id="valBgScale">100%</span>
+                </div>
+                <input type="range" id="rangeBgScale" min="40" max="250" value="100" class="w-full" />
+              </div>
+
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <div class="flex justify-between text-xs font-medium mb-1">
+                    <span>Vị trí ngang</span>
+                    <span id="valBgPosX">50%</span>
+                  </div>
+                  <input type="range" id="rangeBgPosX" min="0" max="100" value="50" class="w-full" />
+                </div>
+                <div>
+                  <div class="flex justify-between text-xs font-medium mb-1">
+                    <span>Vị trí dọc</span>
+                    <span id="valBgPosY">50%</span>
+                  </div>
+                  <input type="range" id="rangeBgPosY" min="0" max="100" value="50" class="w-full" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 3: KÍCH THƯỚC PHÍM & SỐ -->
+          <div id="tabSizes" class="tab-content hidden space-y-4">
+            <div class="bg-gray-50 p-3.5 rounded-xl space-y-4">
+              <div>
+                <div class="flex justify-between text-xs font-medium mb-1">
+                  <span>Chiều cao phím bấm</span>
+                  <span id="valBtnHeight">58px</span>
+                </div>
+                <input type="range" id="rangeBtnHeight" min="42" max="82" value="58" class="w-full" />
+              </div>
+
+              <div>
+                <div class="flex justify-between text-xs font-medium mb-1">
+                  <span>Khoảng cách giữa các phím</span>
+                  <span id="valBtnGap">8px</span>
+                </div>
+                <input type="range" id="rangeBtnGap" min="2" max="16" value="8" class="w-full" />
+              </div>
+
+              <div>
+                <div class="flex justify-between text-xs font-medium mb-1">
+                  <span>Bo góc phím bấm</span>
+                  <span id="valBtnRadius">10px</span>
+                </div>
+                <input type="range" id="rangeBtnRadius" min="0" max="32" value="10" class="w-full" />
+              </div>
+
+              <hr class="border-gray-200" />
+
+              <div>
+                <div class="flex justify-between text-xs font-medium mb-1">
+                  <span>Cỡ chữ trên phím bấm</span>
+                  <span id="valBtnFontSize">24px</span>
+                </div>
+                <input type="range" id="rangeBtnFontSize" min="16" max="36" value="24" class="w-full" />
+              </div>
+
+              <div>
+                <div class="flex justify-between text-xs font-medium mb-1">
+                  <span>Cỡ số trên màn hình kết quả</span>
+                  <span id="valDisplayFontSize">46px</span>
+                </div>
+                <input type="range" id="rangeDisplayFontSize" min="28" max="72" value="46" class="w-full" />
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 4: ÂM THANH & CHẾ ĐỘ OFFLINE -->
+          <div id="tabSoundOffline" class="tab-content hidden space-y-4">
+            <!-- Sound Settings -->
+            <div class="bg-gray-50 p-3.5 rounded-xl space-y-3">
+              <div class="flex items-center justify-between">
+                <div>
+                  <div class="font-medium text-gray-800">Âm thanh khi bấm phím</div>
+                  <div class="text-xs text-gray-500">Hoạt động 100% offline không cần mạng</div>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" id="soundToggle" class="sr-only peer" checked />
+                  <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                </label>
+              </div>
+
+              <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Kiểu âm thanh phím</label>
+                <select id="soundTypeSelect" class="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-xs font-medium focus:outline-none focus:border-purple-500">
+                  <option value="pop">Bong bóng nhẹ (Soft Pop)</option>
+                  <option value="mech">Bàn phím cơ (Mechanical Click)</option>
+                  <option value="beep">Điện tử cổ điển (Digital Beep)</option>
+                  <option value="marimba">Đàn gỗ êm dịu (Marimba Note)</option>
+                </select>
+              </div>
+
+              <div>
+                <div class="flex justify-between text-xs font-medium mb-1">
+                  <span>Âm lượng</span>
+                  <span id="valSoundVol">60%</span>
+                </div>
+                <input type="range" id="rangeSoundVol" min="5" max="100" value="60" class="w-full" />
+              </div>
+            </div>
+
+            <!-- Offline / PWA Guide & Export -->
+            <div class="bg-emerald-50 border border-emerald-200 p-3.5 rounded-xl space-y-2.5">
+              <div class="flex items-center gap-2 text-emerald-800 font-semibold text-xs">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Sẵn sàng dùng Offline (Không cần Internet)</span>
+              </div>
+              <p class="text-xs text-emerald-700 leading-relaxed">
+                • <b>Trên iPhone (Safari):</b> Bấm nút <b>Chia sẻ (Share)</b> → chọn <b>Thêm vào MH chính (Add to Home Screen)</b>.<br/>
+                • <b>Trên Android (Chrome):</b> Bấm menu <b>⋮</b> → chọn <b>Cài đặt ứng dụng</b>.<br/>
+                • Toàn bộ màu sắc, hình nền và lịch sử đều tự động lưu trong máy.
+              </p>
+              <button id="downloadOfflineHtmlBtn" class="w-full mt-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium py-2.5 px-4 rounded-xl shadow flex items-center justify-center gap-2 transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                <span>Tải file ứng dụng (.HTML) về máy</span>
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      /* =====================================================================
+         1. DEFAULT CONFIGURATION & STATE MANAGEMENT
+      ===================================================================== */
+      const STORAGE_KEY_SETTINGS = 'custom_calc_settings_v1';
+      const STORAGE_KEY_HISTORY = 'custom_calc_history_v1';
+
+      const DEFAULT_SETTINGS = {
+        colors: {
+          '--header-bg': '#9c4dcc',
+          '--header-text': '#ffffff',
+          '--display-bg': '#ffffff',
+          '--display-text': '#111827',
+          '--display-subtext': '#6b7280',
+          '--accent-color': '#8e24aa',
+          '--keypad-bg': '#f3f4f6',
+          '--num-btn-bg': '#ffffff',
+          '--num-btn-text': '#111827',
+          '--op-btn-bg': '#ffffff',
+          '--op-btn-text': '#8e24aa',
+          '--eq-btn-bg': '#7b1fa2',
+          '--eq-btn-text': '#ffffff'
+        },
+        wallpaper: {
+          imageData: '',
+          opacity: 100,
+          overlay: 0,
+          scale: 100,
+          posX: 50,
+          posY: 50
+        },
+        sizes: {
+          btnHeight: 58,
+          btnGap: 8,
+          btnRadius: 10,
+          btnFontSize: 24,
+          displayFontSize: 46
+        },
+        sound: {
+          enabled: true,
+          type: 'pop',
+          volume: 60
+        }
+      };
+
+      const PRESETS = {
+        purple: {
+          '--header-bg': '#9c4dcc',
+          '--header-text': '#ffffff',
+          '--display-bg': '#ffffff',
+          '--display-text': '#111827',
+          '--display-subtext': '#6b7280',
+          '--accent-color': '#8e24aa',
+          '--keypad-bg': '#f3f4f6',
+          '--num-btn-bg': '#ffffff',
+          '--num-btn-text': '#111827',
+          '--op-btn-bg': '#ffffff',
+          '--op-btn-text': '#8e24aa',
+          '--eq-btn-bg': '#7b1fa2',
+          '--eq-btn-text': '#ffffff'
+        },
+        ocean: {
+          '--header-bg': '#0284c7',
+          '--header-text': '#ffffff',
+          '--display-bg': '#f0f9ff',
+          '--display-text': '#0c4a6e',
+          '--display-subtext': '#0369a1',
+          '--accent-color': '#0284c7',
+          '--keypad-bg': '#e0f2fe',
+          '--num-btn-bg': '#ffffff',
+          '--num-btn-text': '#0f172a',
+          '--op-btn-bg': '#f8fafc',
+          '--op-btn-text': '#0284c7',
+          '--eq-btn-bg': '#0369a1',
+          '--eq-btn-text': '#ffffff'
+        },
+        sakura: {
+          '--header-bg': '#ec4899',
+          '--header-text': '#ffffff',
+          '--display-bg': '#fff1f2',
+          '--display-text': '#881337',
+          '--display-subtext': '#be185d',
+          '--accent-color': '#db2777',
+          '--keypad-bg': '#fce7f3',
+          '--num-btn-bg': '#ffffff',
+          '--num-btn-text': '#4c0519',
+          '--op-btn-bg': '#fff5f7',
+          '--op-btn-text': '#db2777',
+          '--eq-btn-bg': '#be185d',
+          '--eq-btn-text': '#ffffff'
+        },
+        dark: {
+          '--header-bg': '#1f2937',
+          '--header-text': '#f9fafb',
+          '--display-bg': '#111827',
+          '--display-text': '#f9fafb',
+          '--display-subtext': '#9ca3af',
+          '--accent-color': '#c084fc',
+          '--keypad-bg': '#030712',
+          '--num-btn-bg': '#1f2937',
+          '--num-btn-text': '#f3f4f6',
+          '--op-btn-bg': '#111827',
+          '--op-btn-text': '#c084fc',
+          '--eq-btn-bg': '#9333ea',
+          '--eq-btn-text': '#ffffff'
+        }
+      };
+
+      let settings = loadSettings();
+      let historyItems = loadHistory();
+
+      // Calculator State
+      let expression = '';
+      let isDegree = true;
+      let justEvaluated = false;
+
+      function loadSettings() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY_SETTINGS);
+          if (!raw) return JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
+          const parsed = JSON.parse(raw);
+          return {
+            colors: { ...DEFAULT_SETTINGS.colors, ...(parsed.colors || {}) },
+            wallpaper: { ...DEFAULT_SETTINGS.wallpaper, ...(parsed.wallpaper || {}) },
+            sizes: { ...DEFAULT_SETTINGS.sizes, ...(parsed.sizes || {}) },
+            sound: { ...DEFAULT_SETTINGS.sound, ...(parsed.sound || {}) }
+          };
+        } catch (e) {
+          return JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
+        }
+      }
+
+      function saveSettings() {
+        try {
+          localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(settings));
+        } catch (e) {
+          showToast('Dung lượng ảnh quá lớn để lưu bộ nhớ đệm!');
+        }
+      }
+
+      function loadHistory() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY_HISTORY);
+          return raw ? JSON.parse(raw) : [];
+        } catch (e) {
+          return [];
+        }
+      }
+
+      function saveHistory() {
+        try {
+          localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(historyItems.slice(0, 100)));
+        } catch (e) {
+          console.warn('Could not save history', e);
+        }
+      }
+
+      /* =====================================================================
+         2. WEB AUDIO API SYNTHESIZER (100% OFFLINE KEYPRESS SOUNDS)
+      ===================================================================== */
+      let audioCtx = null;
+
+      function playKeySound(isSpecial = false) {
+        if (!settings.sound.enabled) return;
+        try {
+          if (!audioCtx) {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            audioCtx = new AudioContext();
+          }
+          if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+          }
+
+          const vol = (settings.sound.volume / 100) * 0.35;
+          const now = audioCtx.currentTime;
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+
+          const type = settings.sound.type;
+
+          if (type === 'pop') {
+            osc.type = 'sine';
+            const baseFreq = isSpecial ? 520 : 660;
+            osc.frequency.setValueAtTime(baseFreq, now);
+            osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.45, now + 0.045);
+            gain.gain.setValueAtTime(vol, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+            osc.start(now);
+            osc.stop(now + 0.055);
+          } else if (type === 'mech') {
+            osc.type = 'triangle';
+            const baseFreq = isSpecial ? 280 : 380;
+            osc.frequency.setValueAtTime(baseFreq, now);
+            osc.frequency.exponentialRampToValueAtTime(90, now + 0.03);
+            gain.gain.setValueAtTime(vol * 1.2, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.035);
+            osc.start(now);
+            osc.stop(now + 0.04);
+          } else if (type === 'beep') {
+            osc.type = 'square';
+            const baseFreq = isSpecial ? 880 : 1046.5;
+            osc.frequency.setValueAtTime(baseFreq, now);
+            gain.gain.setValueAtTime(vol * 0.4, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.045);
+            osc.start(now);
+            osc.stop(now + 0.05);
+          } else if (type === 'marimba') {
+            osc.type = 'sine';
+            const notes = [523.25, 587.33, 659.25, 783.99, 880.0];
+            const note = isSpecial ? 440 : notes[Math.floor(Math.random() * notes.length)];
+            osc.frequency.setValueAtTime(note, now);
+            gain.gain.setValueAtTime(vol, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+            osc.start(now);
+            osc.stop(now + 0.15);
+          }
+        } catch (e) {
+          // Ignore audio errors if blocked
+        }
+      }
+
+      /* =====================================================================
+         3. APPLY SETTINGS TO DOM & CSS VARIABLES
+      ===================================================================== */
+      const rootStyle = document.documentElement.style;
+
+      function applySettingsToUI() {
+        // Colors
+        for (const [varName, val] of Object.entries(settings.colors)) {
+          rootStyle.setProperty(varName, val);
+        }
+        // Sync accent color with operator text color if customized
+        rootStyle.setProperty('--accent-color', settings.colors['--op-btn-text']);
+        document.getElementById('metaThemeColor').setAttribute('content', settings.colors['--header-bg']);
+
+        // Update color input pickers
+        document.querySelectorAll('input[type="color"][data-var]').forEach(inp => {
+          const v = inp.getAttribute('data-var');
+          if (settings.colors[v]) inp.value = settings.colors[v];
+        });
+
+        // Wallpaper
+        const bgDiv = document.getElementById('displayBgImage');
+        if (settings.wallpaper.imageData) {
+          bgDiv.style.backgroundImage = `url("${settings.wallpaper.imageData}")`;
+        } else {
+          bgDiv.style.backgroundImage = 'none';
+        }
+        rootStyle.setProperty('--bg-opacity', settings.wallpaper.opacity / 100);
+        rootStyle.setProperty('--bg-overlay-alpha', settings.wallpaper.overlay / 100);
+        rootStyle.setProperty('--bg-scale', settings.wallpaper.scale + '%');
+        rootStyle.setProperty('--bg-pos-x', settings.wallpaper.posX + '%');
+        rootStyle.setProperty('--bg-pos-y', settings.wallpaper.posY + '%');
+
+        // Sync Wallpaper Sliders
+        document.getElementById('rangeBgOpacity').value = settings.wallpaper.opacity;
+        document.getElementById('valBgOpacity').textContent = settings.wallpaper.opacity + '%';
+
+        document.getElementById('rangeBgOverlay').value = settings.wallpaper.overlay;
+        document.getElementById('valBgOverlay').textContent = settings.wallpaper.overlay + '%';
+
+        document.getElementById('rangeBgScale').value = settings.wallpaper.scale;
+        document.getElementById('valBgScale').textContent = settings.wallpaper.scale + '%';
+
+        document.getElementById('rangeBgPosX').value = settings.wallpaper.posX;
+        document.getElementById('valBgPosX').textContent = settings.wallpaper.posX + '%';
+
+        document.getElementById('rangeBgPosY').value = settings.wallpaper.posY;
+        document.getElementById('valBgPosY').textContent = settings.wallpaper.posY + '%';
+
+        // Sizes
+        rootStyle.setProperty('--btn-scale-h', settings.sizes.btnHeight + 'px');
+        rootStyle.setProperty('--btn-gap', settings.sizes.btnGap + 'px');
+        rootStyle.setProperty('--btn-radius', settings.sizes.btnRadius + 'px');
+        rootStyle.setProperty('--btn-font-size', settings.sizes.btnFontSize + 'px');
+        rootStyle.setProperty('--display-font-size', settings.sizes.displayFontSize + 'px');
+
+        document.getElementById('rangeBtnHeight').value = settings.sizes.btnHeight;
+        document.getElementById('valBtnHeight').textContent = settings.sizes.btnHeight + 'px';
+
+        document.getElementById('rangeBtnGap').value = settings.sizes.btnGap;
+        document.getElementById('valBtnGap').textContent = settings.sizes.btnGap + 'px';
+
+        document.getElementById('rangeBtnRadius').value = settings.sizes.btnRadius;
+        document.getElementById('valBtnRadius').textContent = settings.sizes.btnRadius + 'px';
+
+        document.getElementById('rangeBtnFontSize').value = settings.sizes.btnFontSize;
+        document.getElementById('valBtnFontSize').textContent = settings.sizes.btnFontSize + 'px';
+
+        document.getElementById('rangeDisplayFontSize').value = settings.sizes.displayFontSize;
+        document.getElementById('valDisplayFontSize').textContent = settings.sizes.displayFontSize + 'px';
+
+        // Sound
+        document.getElementById('soundToggle').checked = settings.sound.enabled;
+        document.getElementById('soundTypeSelect').value = settings.sound.type;
+        document.getElementById('rangeSoundVol').value = settings.sound.volume;
+        document.getElementById('valSoundVol').textContent = settings.sound.volume + '%';
+      }
+
+      /* =====================================================================
+         4. CALCULATOR ENGINE & EXPRESSION EVALUATOR
+      ===================================================================== */
+      const expressionEl = document.getElementById('expressionText');
+      const resultEl = document.getElementById('resultText');
+
+      function formatVietnameseNumber(num) {
+        if (!isFinite(num) || isNaN(num)) return 'Lỗi phép tính';
+        // Avoid floating point precision artifacts like 0.30000000000000004
+        const rounded = Math.round(num * 1e12) / 1e12;
+        const parts = rounded.toString().split('.');
+        // Format integer part with dots for thousands or keep clean
+        const intPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        if (parts.length > 1) {
+          return intPart + ',' + parts[1];
+        }
+        return intPart;
+      }
+
+      function factorial(n) {
+        if (n < 0 || !Number.isInteger(n)) return NaN;
+        if (n > 170) return Infinity;
+        let res = 1;
+        for (let i = 2; i <= n; i++) res *= i;
+        return res;
+      }
+
+      function evaluateExpression(rawExpr) {
+        if (!rawExpr || !rawExpr.trim()) return null;
+
+        let expr = rawExpr
+          .replace(/×/g, '*')
+          .replace(/÷/g, '/')
+          .replace(/−/g, '-')
+          .replace(/,/g, '.')
+          .replace(/π/g, 'Math.PI')
+          .replace(/\be\b/g, 'Math.E')
+          .replace(/√\(/g, 'Math.sqrt(')
+          .replace(/ln\(/g, 'Math.log(')
+          .replace(/log\(/g, 'Math.log10(')
+          .replace(/abs\(/g, 'Math.abs(')
+          .replace(/\^/g, '**');
+
+        // Handle percentage: e.g., 50% -> (50/100)
+        expr = expr.replace(/(\d+(\.\d+)?)%/g, '($1/100)');
+
+        // Handle factorial: e.g., 5! -> factorial(5)
+        expr = expr.replace(/(\d+)!/g, 'factorial($1)');
+
+        // Handle implicit multiplication e.g. 2(3) -> 2*(3), 2Math.PI -> 2*Math.PI, )( -> )*(
+        expr = expr
+          .replace(/(\d)(\()/g, '$1*$2')
+          .replace(/(\))(\d)/g, '$1*$2')
+          .replace(/(\))(\()/g, '$1*$2')
+          .replace(/(\d)(Math\.)/g, '$1*$2')
+          .replace(/(\d)(sin|cos|tan|asin|acos)/g, '$1*$2');
+
+        // Auto-close unclosed parentheses for live preview
+        const openCount = (expr.match(/\(/g) || []).length;
+        const closeCount = (expr.match(/\)/g) || []).length;
+        if (openCount > closeCount) {
+          expr += ')'.repeat(openCount - closeCount);
+        }
+
+        // Remove trailing operators for live preview safety
+        expr = expr.replace(/[\+\-\*\/\.]+$/, '');
+        if (!expr) return null;
+
+        const degToRad = isDegree ? (Math.PI / 180) : 1;
+        const radToDeg = isDegree ? (180 / Math.PI) : 1;
+
+        const scope = {
+          Math,
+          factorial,
+          sin: (x) => Math.sin(x * degToRad),
+          cos: (x) => Math.cos(x * degToRad),
+          tan: (x) => Math.tan(x * degToRad),
+          asin: (x) => Math.asin(x) * radToDeg,
+          acos: (x) => Math.acos(x) * radToDeg
+        };
+
+        try {
+          const fn = new Function(...Object.keys(scope), `"use strict"; return (${expr});`);
+          const val = fn(...Object.values(scope));
+          if (typeof val === 'number' && !isNaN(val)) {
+            return val;
+          }
+          return null;
+        } catch (err) {
+          return null;
+        }
+      }
+
+      function updateDisplay() {
+        if (!expression) {
+          expressionEl.textContent = '';
+          resultEl.textContent = '0';
+          return;
+        }
+
+        expressionEl.textContent = expression;
+        expressionEl.scrollLeft = expressionEl.scrollWidth;
+
+        const val = evaluateExpression(expression);
+        if (val !== null) {
+          resultEl.textContent = formatVietnameseNumber(val);
+        }
+        resultEl.scrollLeft = resultEl.scrollWidth;
+      }
+
+      function handleKeyInput(key) {
+        const isOperator = ['+', '−', '×', '÷', '%', '^'].includes(key);
+        playKeySound(isOperator || key === 'C' || key === '=');
+
+        if (key === 'C') {
+          expression = '';
+          justEvaluated = false;
+          expressionEl.textContent = '';
+          resultEl.textContent = '0';
+          return;
+        }
+
+        if (key === '=') {
+          if (!expression) return;
+          const val = evaluateExpression(expression);
+          if (val !== null && isFinite(val)) {
+            const formattedRes = formatVietnameseNumber(val);
+            // Save to history
+            historyItems.unshift({
+              id: Date.now(),
+              expr: expression,
+              result: formattedRes,
+              rawResult: val.toString().replace('.', ','),
+              time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+            });
+            saveHistory();
+
+            expressionEl.textContent = expression + ' =';
+            resultEl.textContent = formattedRes;
+            expression = val.toString().replace('.', ',');
+            justEvaluated = true;
+          } else {
+            resultEl.textContent = 'Lỗi phép tính';
+          }
+          return;
+        }
+
+        if (key === '()') {
+          if (justEvaluated) {
+            expression = '';
+            justEvaluated = false;
+          }
+          const openCount = (expression.match(/\(/g) || []).length;
+          const closeCount = (expression.match(/\)/g) || []).length;
+          const lastChar = expression.slice(-1);
+          if (openCount > closeCount && (/\d|\)|π|e|%/.test(lastChar))) {
+            expression += ')';
+          } else {
+            expression += '(';
+          }
+          updateDisplay();
+          return;
+        }
+
+        // If user just pressed '=' and types a number, start fresh; if operator, continue from result
+        if (justEvaluated) {
+          if (isOperator) {
+            justEvaluated = false;
+          } else {
+            expression = '';
+            justEvaluated = false;
+          }
+        }
+
+        // Prevent duplicate operators
+        const lastChar = expression.slice(-1);
+        if (isOperator && ['+', '−', '×', '÷', '^'].includes(lastChar)) {
+          expression = expression.slice(0, -1) + key;
+          updateDisplay();
+          return;
+        }
+
+        // Prevent multiple commas in the same number segment
+        if (key === ',') {
+          const segments = expression.split(/[\+\-\×\÷\(\)\^%]/);
+          const currentNum = segments[segments.length - 1];
+          if (currentNum.includes(',')) return;
+          if (currentNum === '') expression += '0';
+        }
+
+        expression += key;
+        updateDisplay();
+      }
+
+      function handleBackspace() {
+        playKeySound(true);
+        if (justEvaluated) {
+          justEvaluated = false;
+        }
+        if (!expression) return;
+
+        // Remove multi-char scientific tokens cleanly if at the end
+        const sciTokens = ['asin(', 'acos(', 'sin(', 'cos(', 'tan(', 'log(', 'abs(', 'ln(', '√(', '1/('];
+        for (const token of sciTokens) {
+          if (expression.endsWith(token)) {
+            expression = expression.slice(0, -token.length);
+            updateDisplay();
+            return;
+          }
+        }
+
+        expression = expression.slice(0, -1);
+        updateDisplay();
+      }
+
+      /* =====================================================================
+         5. EVENT LISTENERS FOR KEYPAD & SCIENTIFIC DRAWER
+      ===================================================================== */
+      document.querySelectorAll('#keypadArea .calc-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const key = btn.getAttribute('data-key');
+          handleKeyInput(key);
+        });
+      });
+
+      document.querySelectorAll('#scientificPanel .sci-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (btn.getAttribute('data-action') === 'degRad') {
+            playKeySound(true);
+            isDegree = !isDegree;
+            btn.textContent = isDegree ? 'DEG' : 'RAD';
+            document.getElementById('degRadIndicator').textContent = isDegree ? 'DEG' : 'RAD';
+            updateDisplay();
+            return;
+          }
+          const sciToken = btn.getAttribute('data-sci');
+          if (sciToken) {
+            handleKeyInput(sciToken);
+          }
+        });
+      });
+
+      document.getElementById('backspaceBtn').addEventListener('click', handleBackspace);
+
+      // Toggle Scientific Panel (^ / v)
+      const sciPanel = document.getElementById('scientificPanel');
+      const sciChevron = document.getElementById('sciChevronIcon');
+      const degRadBadge = document.getElementById('degRadIndicator');
+
+      document.getElementById('toggleSciBtn').addEventListener('click', () => {
+        playKeySound(true);
+        const isOpen = sciPanel.classList.toggle('open');
+        sciChevron.style.transform = isOpen ? 'rotate(180deg)' : 'rotate(0deg)';
+        degRadBadge.classList.toggle('hidden', !isOpen);
+      });
+
+      // Physical Keyboard Support
+      window.addEventListener('keydown', (e) => {
+        if (!document.getElementById('settingsModal').classList.contains('hidden')) return;
+        if (!document.getElementById('historyModal').classList.contains('hidden')) return;
+
+        const k = e.key;
+        if (/^[0-9]$/.test(k)) handleKeyInput(k);
+        else if (k === '+' ) handleKeyInput('+');
+        else if (k === '-') handleKeyInput('−');
+        else if (k === '*') handleKeyInput('×');
+        else if (k === '/') { e.preventDefault(); handleKeyInput('÷'); }
+        else if (k === '%' ) handleKeyInput('%');
+        else if (k === ',' || k === '.') handleKeyInput(',');
+        else if (k === '(' || k === ')') handleKeyInput(k);
+        else if (k === 'Enter' || k === '=') { e.preventDefault(); handleKeyInput('='); }
+        else if (k === 'Backspace') handleBackspace();
+        else if (k === 'Escape' || k === 'c' || k === 'C') handleKeyInput('C');
+      });
+
+      /* =====================================================================
+         6. HISTORY MODAL LOGIC
+      ===================================================================== */
+      const historyModal = document.getElementById('historyModal');
+      const historyListEl = document.getElementById('historyList');
+
+      function renderHistory() {
+        if (!historyItems.length) {
+          historyListEl.innerHTML = `
+            <div class="h-full flex flex-col items-center justify-center text-gray-400 py-12">
+              <svg class="w-12 h-12 mb-2 opacity-40" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p class="text-sm">Chưa có lịch sử tính toán nào</p>
+            </div>
+          `;
+          return;
+        }
+
+        historyListEl.innerHTML = historyItems.map((item, idx) => `
+          <div class="bg-gray-50 hover:bg-purple-50/60 border border-gray-100 rounded-xl p-3 transition cursor-pointer group" data-hist-idx="${idx}">
+            <div class="flex justify-between items-center text-[11px] text-gray-400 mb-1">
+              <span>${item.time || ''}</span>
+              <span class="text-purple-600 opacity-0 group-hover:opacity-100 transition font-medium">Chạm để dùng lại</span>
+            </div>
+            <div class="text-right text-sm text-gray-600 break-all">${item.expr}</div>
+            <div class="text-right text-xl font-semibold text-gray-900 mt-0.5">= ${item.result}</div>
+          </div>
+        `).join('');
+
+        historyListEl.querySelectorAll('[data-hist-idx]').forEach(card => {
+          card.addEventListener('click', () => {
+            const idx = Number(card.getAttribute('data-hist-idx'));
+            const item = historyItems[idx];
+            if (item) {
+              playKeySound();
+              expression = item.rawResult || item.result.replace(/\./g, '');
+              justEvaluated = false;
+              updateDisplay();
+              historyModal.classList.add('hidden');
+              showToast('Đã chèn kết quả từ lịch sử');
+            }
+          });
+        });
+      }
+
+      document.getElementById('openHistoryBtn').addEventListener('click', () => {
+        playKeySound();
+        renderHistory();
+        historyModal.classList.remove('hidden');
+      });
+
+      document.getElementById('closeHistoryBtn').addEventListener('click', () => {
+        historyModal.classList.add('hidden');
+      });
+
+      historyModal.addEventListener('click', (e) => {
+        if (e.target === historyModal) historyModal.classList.add('hidden');
+      });
+
+      document.getElementById('clearHistoryBtn').addEventListener('click', () => {
+        playKeySound(true);
+        historyItems = [];
+        saveHistory();
+        renderHistory();
+        showToast('Đã xóa toàn bộ lịch sử');
+      });
+
+      /* =====================================================================
+         7. CUSTOMIZATION & SETTINGS MODAL LOGIC
+      ===================================================================== */
+      const settingsModal = document.getElementById('settingsModal');
+
+      function openSettings(defaultTab = 'tabColors') {
+        playKeySound();
+        switchSettingsTab(defaultTab);
+        settingsModal.classList.remove('hidden');
+      }
+
+      document.getElementById('openSettingsMenuBtn').addEventListener('click', () => openSettings('tabColors'));
+      document.getElementById('openQuickMoreBtn').addEventListener('click', () => openSettings('tabSoundOffline'));
+      document.getElementById('displayDotsBtn').addEventListener('click', () => openSettings('tabWallpaper'));
+
+      document.getElementById('closeSettingsBtn').addEventListener('click', () => {
+        settingsModal.classList.add('hidden');
+      });
+
+      settingsModal.addEventListener('click', (e) => {
+        if (e.target === settingsModal) settingsModal.classList.add('hidden');
+      });
+
+      function switchSettingsTab(tabId) {
+        document.querySelectorAll('.settings-tab').forEach(tab => {
+          const isTarget = tab.getAttribute('data-tab') === tabId;
+          tab.classList.toggle('text-purple-700', isTarget);
+          tab.classList.toggle('border-b-2', isTarget);
+          tab.classList.toggle('border-purple-700', isTarget);
+          tab.classList.toggle('text-gray-500', !isTarget);
+        });
+        document.querySelectorAll('.tab-content').forEach(content => {
+          content.classList.toggle('hidden', content.id !== tabId);
+        });
+      }
+
+      document.querySelectorAll('.settings-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          playKeySound();
+          switchSettingsTab(tab.getAttribute('data-tab'));
+        });
+      });
+
+      // Individual Color Inputs
+      document.querySelectorAll('input[type="color"][data-var]').forEach(inp => {
+        inp.addEventListener('input', (e) => {
+          const varName = e.target.getAttribute('data-var');
+          settings.colors[varName] = e.target.value;
+          applySettingsToUI();
+          saveSettings();
+        });
+      });
+
+      // Preset Theme Buttons
+      document.querySelectorAll('.preset-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          playKeySound();
+          const presetKey = btn.getAttribute('data-preset');
+          if (PRESETS[presetKey]) {
+            settings.colors = { ...PRESETS[presetKey] };
+            applySettingsToUI();
+            saveSettings();
+            showToast('Đã áp dụng bộ màu');
+          }
+        });
+      });
+
+      // Wallpaper Upload from Device Gallery (Compressed via Canvas for reliable Offline storage)
+      document.getElementById('bgImageInput').addEventListener('change', (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function (event) {
+          const img = new Image();
+          img.onload = function () {
+            const canvas = document.createElement('canvas');
+            const maxDim = 900;
+            let w = img.width;
+            let h = img.height;
+            if (w > maxDim || h > maxDim) {
+              if (w > h) {
+                h = Math.round((h * maxDim) / w);
+                w = maxDim;
+              } else {
+                w = Math.round((w * maxDim) / h);
+                h = maxDim;
+              }
+            }
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+
+            settings.wallpaper.imageData = canvas.toDataURL('image/jpeg', 0.82);
+            applySettingsToUI();
+            saveSettings();
+            showToast('Đã cập nhật hình nền khung tính toán');
+          };
+          img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+
+      document.getElementById('removeBgImageBtn').addEventListener('click', () => {
+        playKeySound(true);
+        settings.wallpaper.imageData = '';
+        document.getElementById('bgImageInput').value = '';
+        applySettingsToUI();
+        saveSettings();
+        showToast('Đã xóa hình nền');
+      });
+
+      // Wallpaper Adjustment Sliders
+      function bindSlider(id, targetObj, prop, callback) {
+        const el = document.getElementById(id);
+        el.addEventListener('input', (e) => {
+          targetObj[prop] = Number(e.target.value);
+          applySettingsToUI();
+          saveSettings();
+          if (callback) callback();
+        });
+      }
+
+      bindSlider('rangeBgOpacity', settings.wallpaper, 'opacity');
+      bindSlider('rangeBgOverlay', settings.wallpaper, 'overlay');
+      bindSlider('rangeBgScale', settings.wallpaper, 'scale');
+      bindSlider('rangeBgPosX', settings.wallpaper, 'posX');
+      bindSlider('rangeBgPosY', settings.wallpaper, 'posY');
+
+      // Size & Font Sliders
+      bindSlider('rangeBtnHeight', settings.sizes, 'btnHeight');
+      bindSlider('rangeBtnGap', settings.sizes, 'btnGap');
+      bindSlider('rangeBtnRadius', settings.sizes, 'btnRadius');
+      bindSlider('rangeBtnFontSize', settings.sizes, 'btnFontSize');
+      bindSlider('rangeDisplayFontSize', settings.sizes, 'displayFontSize');
+
+      // Sound Controls
+      document.getElementById('soundToggle').addEventListener('change', (e) => {
+        settings.sound.enabled = e.target.checked;
+        saveSettings();
+        if (settings.sound.enabled) playKeySound();
+      });
+
+      document.getElementById('soundTypeSelect').addEventListener('change', (e) => {
+        settings.sound.type = e.target.value;
+        saveSettings();
+        playKeySound();
+      });
+
+      bindSlider('rangeSoundVol', settings.sound, 'volume', () => playKeySound());
+
+      // Reset All Settings
+      document.getElementById('resetAllBtn').addEventListener('click', () => {
+        playKeySound(true);
+        settings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
+        applySettingsToUI();
+        saveSettings();
+        showToast('Đã khôi phục cài đặt mặc định');
+      });
+
+      // Download Standalone Offline HTML File
+      document.getElementById('downloadOfflineHtmlBtn').addEventListener('click', () => {
+        playKeySound();
+        const htmlContent = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+        const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'May-Tinh-Tuy-Chinh-Offline.html';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('Đang tải file Máy tính Offline...');
+      });
+
+      /* =====================================================================
+         8. TOAST HELPER & OFFLINE PWA MANIFEST / SERVICE WORKER
+      ===================================================================== */
+      let toastTimer = null;
+      function showToast(msg) {
+        const toast = document.getElementById('toastMsg');
+        toast.textContent = msg;
+        toast.classList.remove('opacity-0');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+          toast.classList.add('opacity-0');
+        }, 2200);
+      }
+
+      // Network status indicator
+      function updateOnlineStatus() {
+        const badge = document.getElementById('offlineBadge');
+        badge.classList.toggle('hidden', navigator.onLine);
+      }
+      window.addEventListener('online', updateOnlineStatus);
+      window.addEventListener('offline', updateOnlineStatus);
+      updateOnlineStatus();
+
+      // Dynamic Inline PWA Web App Manifest (for Add to Home Screen)
+      try {
+        const svgIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192"><rect width="192" height="192" rx="40" fill="#9c4dcc"/><rect x="34" y="28" width="124" height="44" rx="10" fill="#ffffff"/><text x="145" y="58" font-family="sans-serif" font-size="26" fill="#111827" text-anchor="end">0</text><rect x="34" y="86" width="56" height="34" rx="8" fill="#ffffff"/><rect x="102" y="86" width="56" height="34" rx="8" fill="#ffffff"/><rect x="34" y="130" width="56" height="34" rx="8" fill="#ffffff"/><rect x="102" y="130" width="56" height="34" rx="8" fill="#7b1fa2"/><text x="130" y="154" font-family="sans-serif" font-size="24" fill="#ffffff" text-anchor="middle">=</text></svg>`;
+        const iconUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgIcon);
+
+        const manifest = {
+          name: 'Máy tính Tùy chỉnh Offline',
+          short_name: 'Máy tính',
+          start_url: '.',
+          display: 'standalone',
+          background_color: '#f3f4f6',
+          theme_color: '#9c4dcc',
+          icons: [{ src: iconUrl, sizes: '192x192', type: 'image/svg+xml' }]
+        };
+        const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
+        const manifestLink = document.createElement('link');
+        manifestLink.rel = 'manifest';
+        manifestLink.href = URL.createObjectURL(manifestBlob);
+        document.head.appendChild(manifestLink);
+      } catch (e) {
+        // Fallback if sandboxed
+      }
+
+      // Dynamic Inline Service Worker for Full Offline Caching
+      if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
+        try {
+          const swCode = `
+            const CACHE_NAME = 'custom-calc-offline-v1';
+            self.addEventListener('install', (e) => {
+              e.waitUntil(
+                caches.open(CACHE_NAME).then((cache) => cache.addAll([self.location.href]))
+              );
+              self.skipWaiting();
+            });
+            self.addEventListener('activate', (e) => {
+              e.waitUntil(self.clients.claim());
+            });
+            self.addEventListener('fetch', (e) => {
+              e.respondWith(
+                caches.match(e.request).then((cached) => {
+                  return cached || fetch(e.request).then((resp) => {
+                    const copy = resp.clone();
+                    caches.open(CACHE_NAME).then((cache) => cache.put(e.request, copy));
+                    return resp;
+                  }).catch(() => cached);
+                })
+              );
+            });
+          `;
+          const swBlob = new Blob([swCode], { type: 'application/javascript' });
+          navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(() => {});
+        } catch (e) {
+          // Ignore SW registration error in restricted preview iframes
+        }
+      }
+
+      // Initialize UI on Load
+      applySettingsToUI();
+    })();
+  </script>
+</body>
+</html>
